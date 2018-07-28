@@ -63,7 +63,6 @@ class Importer:
 			paths = [paths]
 		if self.copy_packages:
 			for p in paths:
-				# print(p)
 				p = str(p)
 				if p.startswith("~/"):
 					p_full = str(pathlib.Path.home()) + p[1:]
@@ -71,16 +70,13 @@ class Importer:
 					p_full = f"{str(pathlib.Path(p).resolve())}/"
 				else:
 					p_full = p
-				print(p)
 				if os.path.isdir(f"{self.package_location}/{p}"):
 					shutil.rmtree(f"{self.package_location}/{p}")
 				shutil.copytree(p_full, f"{self.package_location}/{p}")
 				self.packages[p] = __import__(p)
 		else:
 			sys.path.insert(0, '.')
-			# print(paths)
 			for p in paths:
-				# print(p)
 				p = str(p)
 				self.packages[p] = __import__(p)
 		for name, package in self.packages.items():
