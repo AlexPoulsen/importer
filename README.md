@@ -1,7 +1,9 @@
 #Importer
 Preventing insanity when dealing with local imports
 
-Subdirectory `Importer` is to allow for pushing to interpreter packages directory with `Importer("Importer", copy_packages=True)`
+Pushing Importer to the interpreter package directory with `push_importer_to_interpreter_path()`
+
+The command copies the folder into itself ignoring git files and preventing infinite looping, initializes Importer with the copied version of itself and pushes it to the interpreter package directory, and deletes the created copy.
 
 ```python
 import Importer

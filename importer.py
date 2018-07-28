@@ -39,6 +39,10 @@ def debug(*values, stack_size=4, mini=False):
 		print("<!>", *called_from(stack_size), "line:" + str(caller.lineno), ":|:", *typedvals, flush=True)
 
 
+def copy_in(path: str, sub: str, *ignore: str):
+	return shutil.copytree(path, f"{path}/{sub}/", ignore=(lambda x, y: [sub, *ignore]))
+
+
 class Importer:
 	# __slots__ = ["paths", "copy_packages", "package_location", "packages", "del_packages"]
 
@@ -62,7 +66,7 @@ class Importer:
 				# print(p)
 				p = str(p)
 				if p.startswith("~/"):
-					p_full = str(pathlib.Path.home()) + p
+					p_full = str(pathlib.Path.home()) + p[1:]
 				elif "/" not in p:
 					p_full = f"{str(pathlib.Path(p).resolve())}/"
 				else:
@@ -105,4 +109,10 @@ class Importer:
 			return f"{str(pathlib.Path(self.packages[package].__file__).resolve())}/"
 		else:
 			raise NoPackagesError("No matching packages found")
+
+
+def push_importer_to_interpreter_path():
+	copy_in(".", "Importer", ".git", ".gitattributes")
+	Importer("Importer", copy_packages=True)
+	shutil.rmtree("Importer")
 
