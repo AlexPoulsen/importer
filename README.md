@@ -15,3 +15,5 @@ Im.modulethree.func("foo", "bar", "bat")  # yes this works, assuming all three p
 Im.moduleone.__file__  # './moduleone/__init__.py'
 Im.path("moduleone")  # '/Users/you/folders/moduleone/__init__.py/'
 ```
+
+Tested on py3.7, but should work on py3.6 as that is when f-strings were added. Importer could potentially be backported further.
