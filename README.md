@@ -16,4 +16,6 @@ Im.moduleone.__file__  # './moduleone/__init__.py'
 Im.path("moduleone")  # '/Users/you/folders/moduleone/__init__.py/'
 ```
 
+Packages with invalid characters in the name (-, /, $, +, etc) are now edited to remove them, and they are replaced with underscores. Even though this should work fine, you should still edit the package's name, if possible, to a valid name. Names starting with a number have it replaced with a _ by default.
+
 Tested on py3.7, but should work on py3.6 as that is when f-strings were added. Importer could potentially be backported further.

@@ -69,9 +69,13 @@ valid_chars = [*char_range("a", "z"), *char_range("A", "Z"), *char_range("0", "9
 
 def name_check(name: str, fallback_char: str = None, reduce_replaced: bool = False):
 	if fallback_char is None:
+		if name[0] in [*char_range("0", "9")]:
+			name = "".join(["N"] + list(name)[1:])
 		replace_known_invalid = "".join([invalid_chars[L] if L in invalid_chars else L for L in name])
 		valid = "".join([L if L in valid_chars else "_" for L in replace_known_invalid])
 	else:
+		if name[0] in [*char_range("0", "9")]:
+			name = "".join([fallback_char] + list(name)[1:])
 		replace_known_invalid = "".join([fallback_char if L in invalid_chars else L for L in name])
 		valid = "".join([L if L in valid_chars else fallback_char for L in replace_known_invalid])
 	if reduce_replaced:
@@ -108,7 +112,7 @@ class Importer:
 			paths = [paths]
 		if self.copy_packages:
 			for p in paths:
-				p_valid_name = name_check(p.split(os.sep)[-1], "_" if not self.replace_visually else None, self.reduce_replaced_chars)
+				p_valid_name = name_check(p.split(os.sep)[-1], None if self.replace_visually else "_", self.reduce_replaced_chars)
 				if p.startswith("~/"):
 					p_full = str(pathlib.Path.home()) + p[1:]
 				elif "/" not in p:
@@ -122,7 +126,7 @@ class Importer:
 		else:
 			sys.path.insert(0, '.')
 			for p in paths:
-				p_valid_name = name_check(p.split(os.sep)[-1], "_" if not self.replace_visually else None, self.reduce_replaced_chars)
+				p_valid_name = name_check(p.split(os.sep)[-1], None if self.replace_visually else "_", self.reduce_replaced_chars)
 				self.packages[p_valid_name] = __import__(p)
 		for name, package in self.packages.items():
 			self.__dict__[name] = package
