@@ -20,37 +20,82 @@ class NoPackagesError(Exception):
 			return "NoPackagesError"
 
 
-def called_from(depth):
-	out = []
-	for x in range(0, depth):
-		try:
-			out.append(inspect.stack()[x + 2][3])
-		except IndexError:
-			return out
-	return out
-
-
-def debug(*values, stack_size=4, mini=False):
-	typedvals = list(map(lambda x: str(x) + " is " + str(type(x)) + ",", values))
-	caller = inspect.getframeinfo(inspect.stack()[1][0])
-	if not mini:
-		print("<!>", *called_from(stack_size), "IN:" + str(caller.filename) + ":" + str(caller.lineno), ":|:", *typedvals, flush=True)
-	elif mini:
-		print("<!>", *called_from(stack_size), "line:" + str(caller.lineno), ":|:", *typedvals, flush=True)
-
-
 def copy_in(path: str, sub: str, *ignore: str):
 	return shutil.copytree(path, f"{path}/{sub}/", ignore=(lambda x, y: [sub, *ignore]))
 
 
-class Importer:
-	# __slots__ = ["paths", "copy_packages", "package_location", "packages", "del_packages"]
+invalid_chars = {
+	"~":  "_",
+	"`":  "_",
+	"!":  "i",
+	"@":  "a",
+	"#":  "H",
+	"$":  "S",
+	"%":  "X",
+	"^":  "v",
+	"&":  "A",
+	"*":  "x",
+	"(":  "_",
+	")":  "_",
+	"-":  "_",
+	"+":  "_",
+	"=":  "_",
+	"{":  "_",
+	"}":  "_",
+	"[":  "_",
+	"]":  "_",
+	"|":  "I",
+	"\\": "_",
+	":":  "i",
+	";":  "j",
+	"\"": "_",
+	"'":  "_",
+	"<":  "v",
+	">":  "v",
+	",":  "_",
+	".":  "_",
+	"?":  "Q",
+	"/":  "_"
+}
 
-	def __init__(self, *paths: str, copy_packages: bool = False, del_packages=False):
+
+def char_range(c1, c2):
+	"""Generates the characters from `c1` to `c2`, inclusive."""
+	return [chr(c) for c in range(ord(c1), ord(c2) + 1)]
+
+
+valid_chars = [*char_range("a", "z"), *char_range("A", "Z"), *char_range("0", "9")]
+
+
+def name_check(name: str, fallback_char: str = None, reduce_replaced: bool = False):
+	if fallback_char is None:
+		replace_known_invalid = "".join([invalid_chars[L] if L in invalid_chars else L for L in name])
+		valid = "".join([L if L in valid_chars else "_" for L in replace_known_invalid])
+	else:
+		replace_known_invalid = "".join([fallback_char if L in invalid_chars else L for L in name])
+		valid = "".join([L if L in valid_chars else fallback_char for L in replace_known_invalid])
+	if reduce_replaced:
+		temp_valid = []
+		last = ""
+		for O, L in zip(name, valid):
+			if (L == last) and (L != O):
+				pass
+			else:
+				temp_valid += [L]
+		return "".join(temp_valid)
+	else:
+		return valid
+
+
+class Importer:
+
+	def __init__(self, *paths: str, copy_packages: bool = False, del_packages=False, replace_invalid_with_similar: bool = False, reduce_replaced_chars: bool = False):
 		self.paths: typing.List[str] = list(paths)
 		self.copy_packages = copy_packages
 		self.package_location = site.getsitepackages()[0]
 		self.packages = {}
+		self.replace_visually = replace_invalid_with_similar
+		self.reduce_replaced_chars = reduce_replaced_chars
 		if not copy_packages:
 			self.del_packages = False
 		else:
@@ -63,7 +108,7 @@ class Importer:
 			paths = [paths]
 		if self.copy_packages:
 			for p in paths:
-				p = str(p)
+				p_valid_name = name_check(p.split(os.sep)[-1], "_" if not self.replace_visually else None, self.reduce_replaced_chars)
 				if p.startswith("~/"):
 					p_full = str(pathlib.Path.home()) + p[1:]
 				elif "/" not in p:
@@ -73,12 +118,12 @@ class Importer:
 				if os.path.isdir(f"{self.package_location}/{p}"):
 					shutil.rmtree(f"{self.package_location}/{p}")
 				shutil.copytree(p_full, f"{self.package_location}/{p}")
-				self.packages[p] = __import__(p)
+				self.packages[p_valid_name] = __import__(p)
 		else:
 			sys.path.insert(0, '.')
 			for p in paths:
-				p = str(p)
-				self.packages[p] = __import__(p)
+				p_valid_name = name_check(p.split(os.sep)[-1], "_" if not self.replace_visually else None, self.reduce_replaced_chars)
+				self.packages[p_valid_name] = __import__(p)
 		for name, package in self.packages.items():
 			self.__dict__[name] = package
 		if len(paths) == 1:
