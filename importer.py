@@ -1,5 +1,4 @@
 import sys
-import inspect
 import os
 import pathlib
 import site
@@ -158,7 +157,6 @@ class Importer:
 
 
 def push_importer_to_interpreter_path():
-	copy_in(".", "Importer", ".git", ".gitattributes")
-	Importer("Importer", copy_packages=True)
-	shutil.rmtree("Importer")
-
+	copy_in(".", "importer", ".git", ".gitattributes")
+	Importer("importer", copy_packages=True)
+	shutil.rmtree("importer")
